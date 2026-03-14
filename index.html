@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .step-hidden { display: none; }
+        .otp-input:focus { border-color: #4f46e5; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 text-slate-900">
+
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+        <div class="h-2 bg-indigo-600 w-full"></div>
+
+        <div class="p-8">
+            <!-- Step 1: Email Input -->
+            <div id="step-input" class="space-y-6 animate__animated animate__fadeIn">
+                <div class="flex flex-col items-center text-center">
+                    <div class="p-3 bg-indigo-50 rounded-full text-indigo-600 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    </div>
+                    <h1 class="text-2xl font-bold text-slate-800">Verify your email</h1>
+                    <p class="text-slate-500 mt-2">
+                        A verification code will be sent from <br/>
+                        <span class="text-indigo-600 font-medium">helloxerrortm@gmail.com</span>
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Recipient Email Address</label>
+                        <input
+                            type="email"
+                            id="email-input"
+                            placeholder="Enter email to receive code"
+                            class="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            required
+                        />
+                    </div>
+                    
+                    <div id="input-error" class="hidden flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                        <span id="error-message"></span>
+                    </div>
+
+                    <button
+                        onclick="handleSendCode()"
+                        id="send-btn"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center shadow-lg shadow-indigo-100"
+                    >
+                        <span id="btn-text">Send Verification Email</span>
+                        <svg id="btn-loader" class="hidden animate-spin ml-2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Verification Code -->
+            <div id="step-verify" class="step-hidden space-y-6 animate__animated animate__fadeInRight">
+                <button onclick="goToInput()" class="flex items-center text-sm text-slate-500 hover:text-indigo-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    Back to start
+                </button>
+
+                <div class="flex flex-col items-center text-center">
+                    <div class="p-3 bg-indigo-50 rounded-full text-indigo-600 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                    </div>
+                    <h1 class="text-2xl font-bold text-slate-800">Check your inbox</h1>
+                    <p class="text-slate-500 mt-2">Enter the 6-digit code sent to <span id="display-email" class="font-semibold text-slate-700"></span></p>
+                </div>
+
+                <div class="flex justify-between gap-2" id="otp-container">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-slate-200 rounded-xl outline-none transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-slate-200 rounded-xl outline-none transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-slate-200 rounded-xl outline-none transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-slate-200 rounded-xl outline-none transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-slate-200 rounded-xl outline-none transition-all">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-2xl font-bold border-2 border-slate-200 rounded-xl outline-none transition-all">
+                </div>
+
+                <div id="verify-error" class="hidden flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                    <span>Invalid verification code. Please try again.</span>
+                </div>
+
+                <button
+                    onclick="handleVerify()"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all"
+                >
+                    Verify & Continue
+                </button>
+
+                <div class="text-center">
+                    <button
+                        id="resend-btn"
+                        onclick="handleSendCode()"
+                        class="text-indigo-600 font-semibold hover:underline disabled:text-slate-400"
+                    >
+                        Resend code
+                    </button>
+                    <p id="timer-text" class="text-xs text-slate-400 mt-1"></p>
+                </div>
+            </div>
+
+            <!-- Step 3: Success -->
+            <div id="step-success" class="step-hidden space-y-6 text-center animate__animated animate__zoomIn">
+                <div class="flex justify-center">
+                    <div class="p-4 bg-green-50 rounded-full text-green-500 animate-bounce">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800">Verified!</h1>
+                <p class="text-slate-500">The code matched perfectly. Access has been granted.</p>
+                <button 
+                    onclick="resetApp()" 
+                    class="w-full bg-slate-900 text-white font-semibold py-3 rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                    Start Over
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Info -->
+    <div class="fixed bottom-6 right-6 max-w-[240px] bg-white border border-slate-200 p-4 rounded-xl shadow-lg text-[10px] text-slate-400 hidden md:block">
+        <p class="font-bold text-slate-600 mb-1 uppercase tracking-widest text-[8px]">Active Connection (HTML Mode)</p>
+        <p>Using Service: <strong id="info-service">service_zjz7o0t</strong></p>
+        <p>Template: <strong id="info-template">template_e9fbdqa</strong></p>
+    </div>
+
+    <script>
+        // CONFIGURATION
+        const SERVICE_ID = "service_zjz7o0t";
+        const TEMPLATE_ID = "template_e9fbdqa";
+        const PUBLIC_KEY = "yGVzllcBp2uAdb4pI";
+
+        let sentCode = '';
+        let timer = 0;
+        let timerInterval;
+
+        // Initialize EmailJS
+        (function() {
+            emailjs.init(PUBLIC_KEY);
+        })();
+
+        // OTP Inputs logic
+        const inputs = document.querySelectorAll('.otp-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key >= 0 && e.key <= 9) {
+                    if (index < inputs.length - 1) inputs[index + 1].focus();
+                } else if (e.key === 'Backspace') {
+                    if (index > 0) inputs[index - 1].focus();
+                }
+            });
+        });
+
+        function showStep(stepId) {
+            document.getElementById('step-input').classList.add('step-hidden');
+            document.getElementById('step-verify').classList.add('step-hidden');
+            document.getElementById('step-success').classList.add('step-hidden');
+            document.getElementById(stepId).classList.remove('step-hidden');
+        }
+
+        function startTimer() {
+            timer = 30;
+            const resendBtn = document.getElementById('resend-btn');
+            const timerText = document.getElementById('timer-text');
+            resendBtn.disabled = true;
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer--;
+                timerText.innerText = `You can resend in ${timer}s`;
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
+                    resendBtn.disabled = false;
+                    timerText.innerText = "";
+                }
+            }, 1000);
+        }
+
+        async function handleSendCode() {
+            const email = document.getElementById('email-input').value.trim();
+            const errorDiv = document.getElementById('input-error');
+            const sendBtn = document.getElementById('send-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnLoader = document.getElementById('btn-loader');
+
+            if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                errorDiv.classList.remove('hidden');
+                document.getElementById('error-message').innerText = "Please enter a valid email address.";
+                return;
+            }
+
+            errorDiv.classList.add('hidden');
+            sendBtn.disabled = true;
+            btnText.innerText = "Sending...";
+            btnLoader.classList.remove('hidden');
+
+            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            try {
+                const templateParams = {
+                    to_email: email,
+                    email: email,
+                    from_name: "HelloXerrorTM Support",
+                    user_email: email,
+                    code: verificationCode,
+                    reply_to: "helloxerrortm@gmail.com"
+                };
+
+                const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams);
+
+                if (response.status === 200) {
+                    sentCode = verificationCode;
+                    document.getElementById('display-email').innerText = email;
+                    showStep('step-verify');
+                    startTimer();
+                } else {
+                    throw new Error("Email service rejected the request.");
+                }
+            } catch (error) {
+                console.error("EmailJS Error:", error);
+                errorDiv.classList.remove('hidden');
+                document.getElementById('error-message').innerText = "Failed to send email. Check your EmailJS configuration.";
+            } finally {
+                sendBtn.disabled = false;
+                btnText.innerText = "Send Verification Email";
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        function handleVerify() {
+            let enteredCode = "";
+            inputs.forEach(input => enteredCode += input.value);
+            const errorDiv = document.getElementById('verify-error');
+
+            if (enteredCode.length < 6) {
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (enteredCode === sentCode) {
+                showStep('step-success');
+            } else {
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        function goToInput() {
+            showStep('step-input');
+        }
+
+        function resetApp() {
+            document.getElementById('email-input').value = "";
+            inputs.forEach(input => input.value = "");
+            showStep('step-input');
+        }
+    </script>
+</body>
+</html>
